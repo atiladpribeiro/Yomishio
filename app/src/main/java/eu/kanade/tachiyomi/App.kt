@@ -36,7 +36,6 @@ import eu.kanade.tachiyomi.util.system.LocaleHelper
 import eu.kanade.tachiyomi.util.system.WebViewUtil
 import eu.kanade.tachiyomi.util.system.toast
 import exh.debug.DebugToggles
-import exh.log.CrashlyticsPrinter
 import exh.log.EHDebugModeOverlay
 import exh.log.EHLogLevel
 import exh.ui.lock.LockActivityDelegate
@@ -226,7 +225,6 @@ open class App : Application(), LifecycleObserver {
 
         // Install Crashlytics in prod
         if (!BuildConfig.DEBUG) {
-            printers += CrashlyticsPrinter(LogLevel.ERROR)
         }
 
         XLog.init(

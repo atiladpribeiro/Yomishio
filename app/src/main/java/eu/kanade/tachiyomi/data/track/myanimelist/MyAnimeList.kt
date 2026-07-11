@@ -18,7 +18,7 @@ class MyAnimeList(private val context: Context, id: Int) : TrackService(id) {
         const val DROPPED = 4
         const val PLAN_TO_READ = 6
 
-        const val DEFAULT_STATUS = READING
+        const val DEFAULT_STATUS = PLAN_TO_READ
         const val DEFAULT_SCORE = 0
 
         const val BASE_URL = "https://myanimelist.net"
@@ -55,6 +55,10 @@ class MyAnimeList(private val context: Context, id: Int) : TrackService(id) {
         }
 
     override fun getCompletionStatus(): Int = COMPLETED
+
+    override fun getReadingStatus(): Int = READING
+
+    override fun getPlanToReadStatus(): Int = PLAN_TO_READ
 
     override fun getScoreList(): List<String> {
         return IntRange(0, 10).map(Int::toString)

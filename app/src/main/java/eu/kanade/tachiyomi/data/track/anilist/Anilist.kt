@@ -22,7 +22,7 @@ class Anilist(private val context: Context, id: Int) : TrackService(id) {
         const val PLANNING = 5
         const val REPEATING = 6
 
-        const val DEFAULT_STATUS = READING
+        const val DEFAULT_STATUS = PLANNING
         const val DEFAULT_SCORE = 0
 
         const val POINT_100 = "POINT_100"
@@ -74,6 +74,10 @@ class Anilist(private val context: Context, id: Int) : TrackService(id) {
         }
 
     override fun getCompletionStatus(): Int = COMPLETED
+
+    override fun getReadingStatus(): Int = READING
+
+    override fun getPlanToReadStatus(): Int = PLANNING
 
     override fun getScoreList(): List<String> {
         return when (scorePreference.get()) {

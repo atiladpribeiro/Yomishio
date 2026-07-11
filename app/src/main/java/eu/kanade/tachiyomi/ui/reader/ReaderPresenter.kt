@@ -659,8 +659,16 @@ class ReaderPresenter(
                 Completable.concat(
                     trackList.map { track ->
                         val service = trackManager.getService(track.sync_id)
-                        if (service != null && service.isLogged && chapterRead > track.last_chapter_read) {
-                            track.last_chapter_read = chapterRead
+                        val shouldAdvanceChapter = chapterRead > track.last_chapter_read
+                        val shouldStartReading = service != null &&
+                            track.status == service.getPlanToReadStatus()
+                        if (service != null && service.isLogged && (shouldAdvanceChapter || shouldStartReading)) {
+                            if (shouldAdvanceChapter) {
+                                track.last_chapter_read = chapterRead
+                            }
+                            if (shouldStartReading) {
+                                track.status = service.getReadingStatus()
+                            }
 
                             // We want these to execute even if the presenter is destroyed and leaks
                             // for a while. The view can still be garbage collected.

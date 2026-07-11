@@ -22,7 +22,7 @@ class Kitsu(private val context: Context, id: Int) : TrackService(id) {
         const val DROPPED = 4
         const val PLAN_TO_READ = 5
 
-        const val DEFAULT_STATUS = READING
+        const val DEFAULT_STATUS = PLAN_TO_READ
         const val DEFAULT_SCORE = 0f
     }
 
@@ -55,6 +55,10 @@ class Kitsu(private val context: Context, id: Int) : TrackService(id) {
         }
 
     override fun getCompletionStatus(): Int = COMPLETED
+
+    override fun getReadingStatus(): Int = READING
+
+    override fun getPlanToReadStatus(): Int = PLAN_TO_READ
 
     override fun getScoreList(): List<String> {
         val df = DecimalFormat("0.#")

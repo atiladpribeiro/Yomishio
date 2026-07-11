@@ -35,6 +35,11 @@ abstract class TrackService(val id: Int) {
 
     abstract fun getCompletionStatus(): Int
 
+    /** Statuses used for automatic tracking transitions. */
+    abstract fun getReadingStatus(): Int
+
+    abstract fun getPlanToReadStatus(): Int
+
     abstract fun getScoreList(): List<String>
 
     open fun indexToScore(index: Int): Float {

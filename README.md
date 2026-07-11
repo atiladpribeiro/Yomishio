@@ -1,44 +1,20 @@
-# TachiyomiAZ  
-https://discord.gg/tachiyomi  
-https://discord.gg/mihon
+# Yomishio
 
-## LEGAL NOTICE: 
-TachiyomiAZ™ is intended to be used for viewing EMAILS and FREE doujins only, I do not condone using this app to access pirated copyrighted material, and by installing TachiyomiAZ™ you agree not to use the application for this purpose. Installing any extensions designed to access anything but EMAIL and FREELY AVAILABLE FAN WORKS is strongly discouraged, cuz I don't wanna get sued. any mention of manga within the application, source code, or this readme is referring only to doujinshi manga.
+Yomishio is a lightweight Android manga reader derived from TachiyomiAZ. The name combines the Japanese ideas of reading (`yomi`) and tide (`shio`).
 
-For legal purposes this is an EMAIL AND FREE DOUJINSHI READER APP, NOT TO BE USED TO ILLEGALLY ACCESS COPYRIGHTED MATERIAL
+## Highlights
 
-plz don't sue me
+- Automatic tracker workflow: newly linked titles start as Plan to Read/Planning/Want to Read, using each service's native label.
+- Starting a planned title automatically changes its tracker state to Reading/Current.
+- MyAnimeList, AniList, Kitsu, Shikimori, and Bangumi support.
+- Imports the original TachiyomiAZ legacy and full backup formats without converting or discarding tracking data.
+- One universal APK supports ARMv7, ARM64, x86, and x86_64.
+- Release builds use code and resource shrinking plus zip alignment for slower devices.
 
-## features
-- material design 1 (sidebar + hamburger)
-- Get Recommendations From MyAnimeList And Anilist
-- EH/ExH login
-- best fork
+## Compatibility
 
-## TODO
-> warning: the code is spaghetti  
-> if some of these sound interesting, feel free to open a pull request. thanks!
+Yomishio deliberately keeps the original internal source IDs, database models, tracker IDs, deep-link schemes, and backup serializers. This allows backups created by TachiyomiAZ to be restored normally while the separate application ID avoids overwriting an existing installation.
 
-### fix
-- [ ] [reverse search order for EH/ExH](https://github.com/az4521/TachiyomiAZ/issues/70)
-- [ ] [exh thumbnails sometimes don't load](https://github.com/az4521/TachiyomiAZ/issues/78)
-- [ ] smart background doesn't work
-### match stable/j2k
-- [ ] [add comicinfo xml stuff](https://github.com/mihonapp/mihon/commit/1395343f116bfbc9c3ee04eed372299ea36aa22d)
-- [ ] j2k: editing manga info - [j2k commit](https://github.com/Jays2Kings/tachiyomiJ2K/commit/d3ec230d4baa8584118dc30807728305715db25b)
-- [ ] CBZ support - [related](https://github.com/search?q=repo%3Ajobobby04%2FTachiyomiSY+cbz&type=commits&s=committer-date&o=asc)
-- [ ] add all the new trackers (komga, bakaupdates, etc.)
-- [ ] re-order per-source downloads (idk what this one even means, kraxen added it)
-### maybe
-- [ ] [side padding thing](https://github.com/az4521/TachiyomiAZ/issues/86)
-- [ ] syncyomi support (see [this pr](https://github.com/jobobby04/TachiyomiSY/pull/1005))
-- [ ] hide chapters in chapter list (alternative to filtering by uploaders cuz i think that doesn't work well when there's a brief period where two groups are scanlating the same manga before one drops it yknow)
-- [ ] [show newer exh galleries as already in library if older versions are](https://github.com/az4521/TachiyomiAZ/issues/91)
-- [ ] allow hiding the "last used source" in the sources menu
-- [ ] cookie login for eh/exh
-- [ ] search bar for settings
-- [ ] update translations
-- [ ] add quick shortcut to extension repos in "Extensions" tab
-- [ ] migrate extension stuff from RX to coroutines
-- [ ] extension repo list: remove category icon, add left-right padding
-- [ ] bump api version and use scoped storage
+## Legal
+
+Yomishio is distributed under the Apache License 2.0 and retains the copyright and attribution history of the upstream project. Use it only with content you are authorized to access.

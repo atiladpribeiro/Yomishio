@@ -24,3 +24,6 @@ app/**/output.json
 
 # Hebrew assets are copied on build
 app/src/main/res/values-iw/
+
+# Local SDK, generated artwork intermediates, and private release signing key
+/work/

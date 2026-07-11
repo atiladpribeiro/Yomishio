@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog bulletedList="true">
-    <changelogversion versionName="v8.8.5-AZ" changeDate="">
+    <changelogversion versionName="Yomishio 1.0.0" changeDate="2026-07-11">
         <changelogtext>fix a crash when exiting the reader</changelogtext>
         <changelogtext>fix EH/EXH cookies issue</changelogtext>
         <changelogtext>add a crash screen to make debugging easier</changelogtext>

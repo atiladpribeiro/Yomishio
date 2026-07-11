@@ -100,6 +100,10 @@ class Bangumi(private val context: Context, id: Int) : TrackService(id) {
 
     override fun getCompletionStatus(): Int = COMPLETED
 
+    override fun getReadingStatus(): Int = READING
+
+    override fun getPlanToReadStatus(): Int = PLANNING
+
     override fun login(
         username: String,
         password: String
@@ -141,7 +145,7 @@ class Bangumi(private val context: Context, id: Int) : TrackService(id) {
         const val DROPPED = 5
         const val PLANNING = 1
 
-        const val DEFAULT_STATUS = READING
+        const val DEFAULT_STATUS = PLANNING
         const val DEFAULT_SCORE = 0
     }
 }

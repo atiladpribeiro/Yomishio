@@ -22,7 +22,7 @@ class Shikimori(private val context: Context, id: Int) : TrackService(id) {
         const val PLANNING = 5
         const val REPEATING = 6
 
-        const val DEFAULT_STATUS = READING
+        const val DEFAULT_STATUS = PLANNING
         const val DEFAULT_SCORE = 0
     }
 
@@ -103,6 +103,10 @@ class Shikimori(private val context: Context, id: Int) : TrackService(id) {
         }
 
     override fun getCompletionStatus(): Int = COMPLETED
+
+    override fun getReadingStatus(): Int = READING
+
+    override fun getPlanToReadStatus(): Int = PLANNING
 
     override fun login(
         username: String,
