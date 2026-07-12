@@ -30,6 +30,7 @@ import com.ms_square.debugoverlay.DebugOverlay
 import com.ms_square.debugoverlay.modules.FpsModule
 import eu.kanade.tachiyomi.crash.CrashActivity
 import eu.kanade.tachiyomi.crash.GlobalExceptionHandler
+import eu.kanade.tachiyomi.data.migration.LegacyDataImporter
 import eu.kanade.tachiyomi.data.notification.Notifications
 import eu.kanade.tachiyomi.ui.main.ForceCloseActivity
 import eu.kanade.tachiyomi.util.system.LocaleHelper
@@ -63,6 +64,10 @@ open class App : Application(), LifecycleObserver {
         GlobalExceptionHandler.initialize(applicationContext, CrashActivity::class.java)
 
         workaroundAndroid7BrokenSSL()
+
+        // A regular Tachiyomi backup excludes settings and tracker sessions and may be partial.
+        // Import a user-provided, one-time migration bundle before databases/services start.
+        LegacyDataImporter.importIfPresent(this)
 
         // Debug tool; see https://fbflipper.com/
         // SoLoader.init(this, false)

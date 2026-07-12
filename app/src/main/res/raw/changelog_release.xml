@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <changelog bulletedList="true">
-    <changelogversion versionName="Yomishio 1.0.1" changeDate="2026-07-12">
-        <changelogtext>replace remaining legacy branding on the splash screen and navigation drawer</changelogtext>
-        <changelogtext>fix unreadable migration options in dark mode</changelogtext>
-        <changelogtext>fix dark-mode popup contrast in reader orientation and related menus</changelogtext>
+    <changelogversion versionName="Yomishio 1.0.3" changeDate="2026-07-12">
+        <changelogtext>add a safe one-time importer for the full TachiyomiAZ database, settings and tracker sessions</changelogtext>
+        <changelogtext>use the transparent launcher artwork without an adaptive background layer</changelogtext>
+        <changelogtext>preserve the Yomishio download folder as the default offline library location</changelogtext>
     </changelogversion>
     <changelogversion versionName="v8.8.4-AZ" changeDate="">
         <changelogtext>fix an issue with the backup system</changelogtext>
