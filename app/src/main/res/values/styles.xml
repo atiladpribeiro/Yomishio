@@ -363,11 +363,16 @@
 
     <style name="FilePickerAlertDialogTheme" parent="Theme.MaterialComponents.Light.Dialog.Alert" />
 
-    <style name="SheetDialog" parent="Theme.Design.Light.BottomSheetDialog">
+    <style name="SheetDialog" parent="Theme.MaterialComponents.BottomSheetDialog">
+        <item name="android:colorBackground">@color/dialogLight</item>
+        <item name="colorSurface">@color/dialogLight</item>
+        <item name="colorOnSurface">@color/textColorPrimaryLight</item>
+        <item name="android:textColor">@color/textColorPrimaryLight</item>
+        <item name="android:textColorPrimary">@color/textColorPrimaryLight</item>
+        <item name="android:textColorSecondary">@color/textColorSecondaryLight</item>
         <!--<item name="android:windowCloseOnTouchOutside">false</item>-->
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="android:colorBackground">     @android:color/transparent</item>
         <item name="android:backgroundDimEnabled">true</item>
         <item name="android:backgroundDimAmount">0.3</item>
         <item name="android:windowFrame">@null</item>

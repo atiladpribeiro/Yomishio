@@ -6,7 +6,7 @@
     <item>
         <bitmap
             android:gravity="center"
-            android:src="@drawable/tachiyomi_circle" />
+            android:src="@drawable/yomishio_launcher_foreground" />
     </item>
 
 </layer-list>

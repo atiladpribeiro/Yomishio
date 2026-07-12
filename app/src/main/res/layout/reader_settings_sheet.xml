@@ -53,6 +53,7 @@
 
     <androidx.appcompat.widget.AppCompatSpinner
         android:id="@+id/viewer"
+        android:popupBackground="?attr/colorSurface"
         android:layout_width="0dp"
         android:layout_height="24dp"
         android:layout_marginTop="20dp"
@@ -86,6 +87,7 @@
 
     <androidx.appcompat.widget.AppCompatSpinner
         android:id="@+id/rotation_mode"
+        android:popupBackground="?attr/colorSurface"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
@@ -105,6 +107,7 @@
 
     <androidx.appcompat.widget.AppCompatSpinner
         android:id="@+id/background_color"
+        android:popupBackground="?attr/colorSurface"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
@@ -211,6 +214,7 @@
 
     <androidx.appcompat.widget.AppCompatSpinner
         android:id="@+id/scale_type"
+        android:popupBackground="?attr/colorSurface"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
@@ -230,6 +234,7 @@
 
     <androidx.appcompat.widget.AppCompatSpinner
         android:id="@+id/zoom_start"
+        android:popupBackground="?attr/colorSurface"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="20dp"
@@ -288,6 +293,7 @@
 
     <androidx.appcompat.widget.AppCompatSpinner
         android:id="@+id/webtoon_side_padding"
+        android:popupBackground="?attr/colorSurface"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"

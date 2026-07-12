@@ -170,6 +170,7 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.appcompat.widget.AppCompatSpinner
+        android:popupBackground="?attr/colorSurface"
         android:id="@+id/color_filter_mode"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

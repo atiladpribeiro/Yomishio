@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="SheetDialog" parent="Theme.MaterialComponents.BottomSheetDialog">
+        <item name="android:colorBackground">@color/dialogDark</item>
+        <item name="colorSurface">@color/dialogDark</item>
+        <item name="colorOnSurface">@color/textColorPrimaryDark</item>
+        <item name="android:textColor">@color/textColorPrimaryDark</item>
+        <item name="android:textColorPrimary">@color/textColorPrimaryDark</item>
+        <item name="android:textColorSecondary">@color/textColorSecondaryDark</item>
+    </style>
+</resources>
