@@ -26,14 +26,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.launchIn
 import rx.Observable
 import uy.kohesive.injekt.injectLazy
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 
 open class SourceManager(private val context: Context) {
     private val prefs: PreferencesHelper by injectLazy()
 
-    private val sourcesMap = mutableMapOf<Long, Source>()
+    private val sourcesMap = ConcurrentHashMap<Long, Source>()
 
-    private val stubSourcesMap = mutableMapOf<Long, StubSource>()
+    private val stubSourcesMap = ConcurrentHashMap<Long, StubSource>()
 
     private val scope = CoroutineScope(Job() + Dispatchers.Main)
 

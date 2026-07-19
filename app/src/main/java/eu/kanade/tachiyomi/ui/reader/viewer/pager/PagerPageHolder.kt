@@ -356,6 +356,7 @@ class PagerPageHolder(
 
         subsamplingImageView =
             SubsamplingScaleImageView(context).apply {
+                viewer.activity.colorInversionCompensation.registerPageView(this)
                 layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
                 setMaxTileSize(viewer.activity.maxBitmapSize)
                 setDoubleTapZoomStyle(SubsamplingScaleImageView.ZOOM_FOCUS_CENTER)
@@ -394,6 +395,7 @@ class PagerPageHolder(
 
         imageView =
             PhotoView(context, null).apply {
+                viewer.activity.colorInversionCompensation.registerPageView(this)
                 layoutParams = LayoutParams(MATCH_PARENT, MATCH_PARENT)
                 adjustViewBounds = true
                 setZoomTransitionDuration(viewer.config.doubleTapAnimDuration)
