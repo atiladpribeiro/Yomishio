@@ -22,6 +22,8 @@ object PreferenceKeys {
 
     const val trueColor = "pref_true_color_key"
 
+    const val readerColorInversionCompensation = "pref_reader_color_inversion_compensation"
+
     const val fullscreen = "fullscreen"
 
     const val cutoutShort = "cutout_short"

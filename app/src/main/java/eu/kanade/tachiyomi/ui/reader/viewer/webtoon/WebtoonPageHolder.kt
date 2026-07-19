@@ -362,6 +362,7 @@ class WebtoonPageHolder(
 
         subsamplingImageView =
             WebtoonSubsamplingImageView(context).apply {
+                viewer.activity.colorInversionCompensation.registerPageView(this)
                 setMaxTileSize(viewer.activity.maxBitmapSize)
                 setPanLimit(SubsamplingScaleImageView.PAN_LIMIT_INSIDE)
                 setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_FIT_WIDTH)
@@ -392,6 +393,7 @@ class WebtoonPageHolder(
 
         imageView =
             AppCompatImageView(context).apply {
+                viewer.activity.colorInversionCompensation.registerPageView(this)
                 adjustViewBounds = true
             }
         frame.addView(imageView, MATCH_PARENT, MATCH_PARENT)

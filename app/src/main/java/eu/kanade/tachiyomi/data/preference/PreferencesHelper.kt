@@ -78,6 +78,9 @@ class PreferencesHelper(val context: Context) {
 
     fun trueColor() = flowPrefs.getBoolean(Keys.trueColor, false)
 
+    fun readerColorInversionCompensation() =
+        flowPrefs.getInt(Keys.readerColorInversionCompensation, 1)
+
     fun fullscreen() = flowPrefs.getBoolean(Keys.fullscreen, true)
 
     fun cutoutShort() = flowPrefs.getBoolean(Keys.cutoutShort, true)

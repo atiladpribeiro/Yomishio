@@ -15,6 +15,7 @@ import eu.kanade.tachiyomi.data.preference.PreferencesHelper
 import eu.kanade.tachiyomi.extension.installer.Installer
 import eu.kanade.tachiyomi.extension.model.Extension
 import eu.kanade.tachiyomi.extension.model.InstallStep
+import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.storage.getUriCompat
 import eu.kanade.tachiyomi.util.system.isPackageInstalled
 import rx.Observable
@@ -160,8 +161,10 @@ internal class ExtensionInstaller(private val context: Context) {
      */
     fun cancelInstall(pkgName: String) {
         val downloadId = activeDownloads.remove(pkgName) ?: return
-        downloadManager.remove(downloadId)
-        Installer.cancelInstallQueue(context, downloadId)
+        launchIO {
+            downloadManager.remove(downloadId)
+            Installer.cancelInstallQueue(context, downloadId)
+        }
     }
 
     /**
@@ -203,7 +206,9 @@ internal class ExtensionInstaller(private val context: Context) {
     private fun deleteDownload(pkgName: String) {
         val downloadId = activeDownloads.remove(pkgName)
         if (downloadId != null) {
-            downloadManager.remove(downloadId)
+            // DownloadManager.remove() is a blocking provider call. Some vendor ROMs take several
+            // seconds here, so never execute it from an Rx unsubscription on the UI thread.
+            launchIO { downloadManager.remove(downloadId) }
         }
         if (activeDownloads.isEmpty()) {
             downloadReceiver.unregister()

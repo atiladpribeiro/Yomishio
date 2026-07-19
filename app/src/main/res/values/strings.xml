@@ -259,6 +259,10 @@
     <string name="pref_show_page_number">Show page number</string>
     <string name="pref_true_color">32-bit color</string>
     <string name="pref_true_color_summary">Reduces banding, but impacts performance</string>
+    <string name="pref_reader_color_inversion_compensation">Correct pages with system color inversion</string>
+    <string name="reader_color_inversion_off">Off</string>
+    <string name="reader_color_inversion_auto">Automatic (recommended)</string>
+    <string name="reader_color_inversion_always">Always on</string>
     <string name="pref_crop_borders">Crop borders</string>
     <string name="pref_custom_brightness">Use custom brightness</string>
     <string name="pref_custom_color_filter">Use custom color filter</string>
@@ -711,6 +715,7 @@
     <string name="download_notifier_downloader_title">Downloader</string>
     <string name="download_notifier_title_error">Error</string>
     <string name="download_notifier_unknown_error">Could not download chapter due to unexpected error</string>
+    <string name="download_notifier_pages_failed">Could not download %1$d page(s). The chapter remains in the queue for retry.</string>
     <string name="download_notifier_page_error">A page is missing in directory</string>
     <string name="download_notifier_page_ready_error">A page has not been loaded</string>
     <string name="download_notifier_text_only_wifi">No Wi-Fi connection available</string>
