@@ -90,6 +90,9 @@ import kotlin.math.roundToLong
 class ReaderActivity : BaseRxActivity<ReaderActivityBinding, ReaderPresenter>() {
     private val preferences by injectLazy<PreferencesHelper>()
 
+    lateinit var colorInversionCompensation: ReaderColorInversionCompensation
+        private set
+
     /**
      * The maximum bitmap size supported by the device.
      */
@@ -167,6 +170,7 @@ class ReaderActivity : BaseRxActivity<ReaderActivityBinding, ReaderPresenter>() 
 
         binding = ReaderActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        colorInversionCompensation = ReaderColorInversionCompensation(this, preferences)
 
         setNotchCutoutMode()
 
@@ -240,6 +244,9 @@ class ReaderActivity : BaseRxActivity<ReaderActivityBinding, ReaderPresenter>() 
      * Called when the activity is destroyed. Cleans up the viewer, configuration and any view.
      */
     override fun onDestroy() {
+        if (::colorInversionCompensation.isInitialized) {
+            colorInversionCompensation.close()
+        }
         super.onDestroy()
         viewer?.destroy()
         viewer = null

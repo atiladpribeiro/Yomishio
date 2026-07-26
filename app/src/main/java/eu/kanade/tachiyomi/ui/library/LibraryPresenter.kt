@@ -12,6 +12,7 @@ import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.database.models.MangaCategory
 import eu.kanade.tachiyomi.data.download.DownloadManager
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
+import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.source.LocalSource
 import eu.kanade.tachiyomi.source.Source
 import eu.kanade.tachiyomi.source.SourceManager
@@ -101,6 +102,14 @@ class LibraryPresenter(
     override fun onCreate(savedState: Bundle?) {
         super.onCreate(savedState)
         subscribeLibrary()
+
+        // The first library render is intentionally allowed before expensive extension loading.
+        // Refresh download badges once sources are ready so the temporary empty cache is never
+        // left visible or cached.
+        launchIO {
+            Injekt.get<ExtensionManager>().awaitInitialization()
+            badgeTriggerRelay.call(Unit)
+        }
     }
 
     /**

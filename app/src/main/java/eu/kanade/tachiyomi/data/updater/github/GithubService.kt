@@ -26,6 +26,7 @@ interface GithubService {
         }
     }
 
-    @GET("/repos/az4521/tachiyomiAZ/releases/latest")
+    // Yomishio must never offer a differently signed TachiyomiAZ APK as an in-app update.
+    @GET("/repos/atiladpribeiro/Yomishio/releases/latest")
     suspend fun getLatestVersion(): GithubRelease
 }

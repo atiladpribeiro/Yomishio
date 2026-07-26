@@ -11,12 +11,13 @@ import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.download.model.Download
 import eu.kanade.tachiyomi.data.download.model.DownloadQueue
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
+import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.source.online.fetchAllImageUrlsFromPageList
 import eu.kanade.tachiyomi.util.lang.RetryWithDelay
-import eu.kanade.tachiyomi.util.lang.launchNow
+import eu.kanade.tachiyomi.util.lang.launchIO
 import eu.kanade.tachiyomi.util.lang.launchUI
 import eu.kanade.tachiyomi.util.lang.plusAssign
 import eu.kanade.tachiyomi.util.lang.runAsObservable
@@ -24,13 +25,16 @@ import eu.kanade.tachiyomi.util.storage.DiskUtil
 import eu.kanade.tachiyomi.util.storage.saveTo
 import eu.kanade.tachiyomi.util.system.ImageUtil
 import exh.isEhBasedSource
-import kotlinx.coroutines.async
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.withContext
 import okhttp3.Response
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
 import rx.schedulers.Schedulers
 import rx.subscriptions.CompositeSubscription
 import timber.log.Timber
+import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
 import java.io.File
@@ -89,6 +93,9 @@ class Downloader(
      */
     val runningRelay: BehaviorRelay<Boolean> = BehaviorRelay.create(false)
 
+    private val restoreJob: Job
+    private var startRequestedAfterRestore = false
+
     /**
      * Whether the downloader is running.
      */
@@ -97,9 +104,18 @@ class Downloader(
         private set
 
     init {
-        launchNow {
-            val chapters = async { store.restore() }
-            queue.addAll(chapters.await())
+        // A large persisted queue requires thousands of database reads and preference writes.
+        // Never block app startup or the main thread while restoring it.
+        restoreJob = launchIO {
+            // Restoring before extension sources are registered would silently discard queued
+            // chapters whose source is still loading. The durable store remains untouched while
+            // we wait, so process death cannot lose the queue.
+            Injekt.get<ExtensionManager>().awaitInitialization()
+            val chapters = store.restore()
+            // DownloadQueue uses a CopyOnWriteArrayList and the app has no queue observers while
+            // its singleton is being constructed. Status setup and JSON persistence are also
+            // expensive for thousands of items, so keep the entire initial rebuild off the UI.
+            queue.addAll(chapters)
         }
     }
 
@@ -110,6 +126,18 @@ class Downloader(
      * @return true if the downloader is started, false otherwise.
      */
     fun start(): Boolean {
+        if (!restoreJob.isCompleted) {
+            if (!startRequestedAfterRestore) {
+                startRequestedAfterRestore = true
+                launchUI {
+                    restoreJob.join()
+                    startRequestedAfterRestore = false
+                    start()
+                }
+            }
+            return true
+        }
+
         if (isRunning || queue.isEmpty()) {
             return false
         }
@@ -190,7 +218,7 @@ class Downloader(
 
         subscriptions +=
             downloadsRelay.concatMapIterable { it }
-                // Concurrently download from 5 different sources
+                // Keep network and storage pressure low enough for slower e-ink devices.
                 .groupBy { it.source }
                 .flatMap(
                     { bySource ->
@@ -198,7 +226,7 @@ class Downloader(
                             downloadChapter(download).subscribeOn(Schedulers.io())
                         }
                     },
-                    5
+                    MAX_CONCURRENT_SOURCES
                 )
                 .onBackpressureLatest()
                 .observeOn(AndroidSchedulers.mainThread())
@@ -239,21 +267,32 @@ class Downloader(
     ) = launchUI {
         val source = sourceManager.get(manga.source) as? HttpSource ?: return@launchUI
         val wasEmpty = queue.isEmpty()
-        // Called in background thread, the operation can be slow with SAF.
+        // Directory enumeration is especially slow through Android's FUSE storage layer.
+        // List each manga directory once instead of doing several metadata calls per chapter.
         val chaptersWithoutDir =
-            async {
+            withContext(Dispatchers.IO) {
+                val downloadedDirectoryNames =
+                    provider.findMangaDirs(manga, source)
+                        .filterNotNull()
+                        .flatMap { it.listFiles().orEmpty().asIterable() }
+                        .mapNotNull { it.name }
+                        .toHashSet()
+
                 chapters
                     // Filter out those already downloaded.
-                    .filter { provider.findChapterDir(it, manga, source) == null }
+                    .filter { chapter ->
+                        provider.getValidChapterDirNames(chapter).none { it in downloadedDirectoryNames }
+                    }
                     // Add chapters to queue from the start.
                     .sortedByDescending { it.source_order }
             }
 
         // Runs in main thread (synchronization needed).
+        val queuedChapterIds = queue.mapNotNull { it.chapter.id }.toHashSet()
         val chaptersToQueue =
-            chaptersWithoutDir.await()
+            chaptersWithoutDir
                 // Filter out those already enqueued.
-                .filter { chapter -> queue.none { it.chapter.id == chapter.id } }
+                .filter { chapter -> chapter.id !in queuedChapterIds }
                 // Create a download for each one.
                 .map { Download(source, manga, it) }
 
@@ -316,11 +355,24 @@ class Downloader(
                     download.downloadedImages = 0
                     download.status = Download.DOWNLOADING
                 }
-                // Get all the URLs to the source images, fetch pages if necessary
-                .flatMap { download.source.fetchAllImageUrlsFromPageList(it) }
-                // Start downloading images, consider we can have downloaded images already
-                // Concurrently do 5 pages at a time
-                .flatMap({ page -> getOrDownloadImage(page, download, tmpDir) }, 5)
+                .flatMap { pages ->
+                    // Snapshot existing images once. Re-listing the directory for every page is
+                    // quadratic and can stall emulated storage when many downloads are active.
+                    val existingFiles = tmpDir.listFiles().orEmpty()
+                    existingFiles
+                        .filter { it.name.orEmpty().endsWith(".tmp") }
+                        .forEach { it.delete() }
+                    val existingImages =
+                        existingFiles
+                            .filterNot { it.name.orEmpty().endsWith(".tmp") }
+                            .associateBy { it.name.orEmpty().substringBefore('.') }
+
+                    download.source.fetchAllImageUrlsFromPageList(pages)
+                        .flatMap(
+                            { page -> getOrDownloadImage(page, download, tmpDir, existingImages) },
+                            MAX_CONCURRENT_PAGES
+                        )
+                }
                 .onBackpressureLatest()
                 // Do when page is downloaded.
                 .doOnNext { notifier.onProgressChange(download) }
@@ -334,6 +386,11 @@ class Downloader(
                     notifier.onError(error.message, download.chapter.name)
                     download
                 }
+        }.onErrorReturn { error ->
+            download.status = Download.ERROR
+            Timber.e(error, "Unexpected download failure for %s", download.chapter.name)
+            notifier.onError(error.message, download.chapter.name)
+            download
         }
 
     /**
@@ -347,7 +404,8 @@ class Downloader(
     private fun getOrDownloadImage(
         page: Page,
         download: Download,
-        tmpDir: UniFile
+        tmpDir: UniFile,
+        existingImages: Map<String, UniFile>
     ): Observable<Page> {
         // If the image URL is empty, do nothing
         if (page.imageUrl == null) {
@@ -355,13 +413,7 @@ class Downloader(
         }
 
         val filename = String.format("%03d", page.number)
-        val tmpFile = tmpDir.findFile("$filename.tmp")
-
-        // Delete temp file if it exists.
-        tmpFile?.delete()
-
-        // Try to find the image file.
-        val imageFile = tmpDir.listFiles()!!.find { it.name!!.startsWith("$filename.") }
+        val imageFile = existingImages[filename]
 
         // If the image is already downloaded, do nothing. Otherwise download from network
         val pageObservable =
@@ -383,7 +435,8 @@ class Downloader(
             }
             .map { page }
             // Mark this page as error and allow to download the remaining
-            .onErrorReturn {
+            .onErrorReturn { error ->
+                Timber.w(error, "Failed page %d of %s", page.number, download.chapter.name)
                 page.progress = 0
                 page.status = Page.ERROR
                 page
@@ -424,11 +477,12 @@ class Downloader(
             .map { response ->
                 val file = tmpDir.createFile("$filename.tmp")
                 try {
-                    response.body.source().saveTo(file.openOutputStream())
-                    val extension = getImageExtension(response, file)
+                    val extension = response.use {
+                        it.body.source().saveTo(file.openOutputStream())
+                        getImageExtension(it, file)
+                    }
                     file.renameTo("$filename.$extension")
                 } catch (e: Exception) {
-                    response.close()
                     file.delete()
                     // SY --> E-Hentai sometimes has dead pages, so we request a new one if it fails
                     if (source.isEhBasedSource()) page.imageUrl = null
@@ -460,7 +514,7 @@ class Downloader(
                     input.copyTo(output)
                 }
             }
-            val extension = ImageUtil.findImageType(cacheFile.inputStream()) ?: return@map tmpFile
+            val extension = cacheFile.inputStream().use { ImageUtil.findImageType(it) } ?: return@map tmpFile
             tmpFile.renameTo("$filename.${extension.extension}")
             cacheFile.delete()
             tmpFile
@@ -506,6 +560,14 @@ class Downloader(
                 Download.ERROR
             }
 
+        if (download.status == Download.ERROR) {
+            val failedPages = download.pages.orEmpty().count { it.status == Page.ERROR }
+            notifier.onError(
+                context.getString(R.string.download_notifier_pages_failed, failedPages),
+                download.chapter.name
+            )
+        }
+
         // Only rename the directory if it's downloaded.
         if (download.status == Download.DOWNLOADED) {
             tmpDir.renameTo(dirname)
@@ -541,5 +603,7 @@ class Downloader(
 
         // Arbitrary minimum required space to start a download: 50 MB
         const val MIN_DISK_SPACE = 50 * 1024 * 1024
+        private const val MAX_CONCURRENT_SOURCES = 2
+        private const val MAX_CONCURRENT_PAGES = 3
     }
 }

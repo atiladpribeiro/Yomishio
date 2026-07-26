@@ -314,6 +314,7 @@
     <string name="download_notifier_downloader_title">Gerenciador de downloads</string>
     <string name="download_notifier_title_error">Erro</string>
     <string name="download_notifier_unknown_error">Não foi possível realizar o download do capítulo devido a um erro inesperado</string>
+    <string name="download_notifier_pages_failed">Não foi possível baixar %1$d página(s). O capítulo continuará na fila para tentar novamente.</string>
     <string name="download_notifier_page_error">Uma página está faltando na pasta</string>
     <string name="download_notifier_page_ready_error">A página não foi carregada</string>
     <string name="download_notifier_text_only_wifi">Conexão Wi-Fi indisponível</string>
@@ -393,6 +394,10 @@
     <string name="pref_read_with_long_tap">Diálogo de toque longo</string>
     <string name="action_open_in_web_view">Abrir na WebView</string>
     <string name="pref_true_color">Cor de 32 bits</string>
+    <string name="pref_reader_color_inversion_compensation">Corrigir páginas com a inversão de cores do sistema</string>
+    <string name="reader_color_inversion_off">Desativada</string>
+    <string name="reader_color_inversion_auto">Automática (recomendado)</string>
+    <string name="reader_color_inversion_always">Sempre ativa</string>
     <string name="pref_skip_read_chapters">Pular capítulos lidos</string>
     <string name="filter_mode_default">Padrão</string>
     <string name="filter_mode_screen">Tela</string>

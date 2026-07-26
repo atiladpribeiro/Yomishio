@@ -6,6 +6,7 @@ import com.hippo.unifile.UniFile
 import eu.kanade.tachiyomi.data.database.models.Chapter
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
+import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.source.SourceManager
 import kotlinx.coroutines.flow.onEach
 import uy.kohesive.injekt.Injekt
@@ -29,6 +30,8 @@ class DownloadCache(
     private val sourceManager: SourceManager,
     private val preferences: PreferencesHelper = Injekt.get()
 ) {
+    private val extensionManager: ExtensionManager by lazy { Injekt.get() }
+
     /**
      * The interval after which this cache should be invalidated. 1 hour shouldn't cause major
      * issues, as the cache is only used for UI feedback.
@@ -130,6 +133,10 @@ class DownloadCache(
      */
     @Synchronized
     private fun checkRenew() {
+        // An early, empty scan would be cached for an hour while extension sources are still
+        // loading. Return a temporary empty result and retry naturally on the next badge refresh.
+        if (!extensionManager.isInitialized) return
+
         if (lastRenew + renewInterval < System.currentTimeMillis()) {
             renew()
             lastRenew = System.currentTimeMillis()

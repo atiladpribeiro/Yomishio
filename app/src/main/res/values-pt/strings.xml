@@ -257,6 +257,7 @@
     <!-- Download Notification -->
     <string name="download_notifier_title_error">Erro</string>
     <string name="download_notifier_unknown_error">Não foi possível transferir o capítulo devido a um erro inesperado</string>
+    <string name="download_notifier_pages_failed">Não foi possível transferir %1$d página(s). O capítulo continuará na fila para nova tentativa.</string>
     <string name="download_notifier_page_error">Página em falta na pasta</string>
     <string name="download_notifier_page_ready_error">A Página não foi carregada</string>
     <string name="download_notifier_text_only_wifi">Sem ligação de Wi-Fi disponível</string>
@@ -358,6 +359,10 @@
     <string name="pref_refresh_library_metadata_summary">Atualizar capas, géneros, descrição e informação sobre o estado de lançamento do mangá</string>
     <string name="action_open_in_web_view">Abra em WebView</string>
     <string name="pref_true_color">32-bit color</string>
+    <string name="pref_reader_color_inversion_compensation">Corrigir páginas com a inversão de cores do sistema</string>
+    <string name="reader_color_inversion_off">Desativada</string>
+    <string name="reader_color_inversion_auto">Automática (recomendado)</string>
+    <string name="reader_color_inversion_always">Sempre ativa</string>
     <string name="pref_skip_read_chapters">Pular capítulos lidos</string>
     <string name="backup_restore_content">A restauração usa as fontes para obter dados, cobranças adicionais podem ser efetuadas pelo operador. 
 \n 

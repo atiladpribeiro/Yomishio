@@ -40,6 +40,25 @@ abstract class TrackService(val id: Int) {
 
     abstract fun getPlanToReadStatus(): Int
 
+    /** Status that must be preserved while the user is rereading a title. */
+    open fun getRereadingStatus(): Int = -1
+
+    /**
+     * Applies the same automatic transition used by Mihon when a chapter is read.
+     *
+     * A newly started title moves to this service's native Reading/Current status even if the
+     * remote service uses a different label. Explicit rereading states are never overwritten.
+     */
+    fun applyChapterRead(track: Track, chapterRead: Int): Boolean {
+        return applyChapterReadTransition(
+            track = track,
+            chapterRead = chapterRead,
+            readingStatus = getReadingStatus(),
+            planToReadStatus = getPlanToReadStatus(),
+            rereadingStatus = getRereadingStatus()
+        )
+    }
+
     abstract fun getScoreList(): List<String>
 
     open fun indexToScore(index: Int): Float {
@@ -83,4 +102,26 @@ abstract class TrackService(val id: Int) {
     ) {
         preferences.setTrackCredentials(this, username, password)
     }
+}
+
+internal fun applyChapterReadTransition(
+    track: Track,
+    chapterRead: Int,
+    readingStatus: Int,
+    planToReadStatus: Int,
+    rereadingStatus: Int
+): Boolean {
+    val shouldAdvanceChapter = chapterRead > track.last_chapter_read
+    val startedFromBeginning = track.last_chapter_read == 0 && shouldAdvanceChapter
+    val shouldStartReading = track.status == planToReadStatus ||
+        (startedFromBeginning && track.status != rereadingStatus)
+
+    if (shouldAdvanceChapter) {
+        track.last_chapter_read = chapterRead
+    }
+    if (shouldStartReading && track.status != readingStatus) {
+        track.status = readingStatus
+    }
+
+    return shouldAdvanceChapter || shouldStartReading
 }

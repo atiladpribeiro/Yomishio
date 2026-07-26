@@ -259,6 +259,10 @@
     <string name="pref_show_page_number">Show page number</string>
     <string name="pref_true_color">32-bit color</string>
     <string name="pref_true_color_summary">Reduces banding, but impacts performance</string>
+    <string name="pref_reader_color_inversion_compensation">Correct pages with system color inversion</string>
+    <string name="reader_color_inversion_off">Off</string>
+    <string name="reader_color_inversion_auto">Automatic (recommended)</string>
+    <string name="reader_color_inversion_always">Always on</string>
     <string name="pref_crop_borders">Crop borders</string>
     <string name="pref_custom_brightness">Use custom brightness</string>
     <string name="pref_custom_color_filter">Use custom color filter</string>
@@ -711,6 +715,7 @@
     <string name="download_notifier_downloader_title">Downloader</string>
     <string name="download_notifier_title_error">Error</string>
     <string name="download_notifier_unknown_error">Could not download chapter due to unexpected error</string>
+    <string name="download_notifier_pages_failed">Could not download %1$d page(s). The chapter remains in the queue for retry.</string>
     <string name="download_notifier_page_error">A page is missing in directory</string>
     <string name="download_notifier_page_ready_error">A page has not been loaded</string>
     <string name="download_notifier_text_only_wifi">No Wi-Fi connection available</string>
@@ -831,7 +836,8 @@ z
 
     <string name="information_empty_repos">You have no additional repos. Tap the plus button to create one for adding external extensions.</string>
     <string name="action_add_repo">Add repo</string>
-    <string name="action_add_repo_message">Add additional repos to Tachiyomi, the format of a repo is \'username/repo\' , with username being the repo owner, and repo being the repo name. Direct .min.json links to repos are also supported.</string>
+    <string name="repo_hint">username/repo or index URL</string>
+    <string name="action_add_repo_message">Enter a GitHub repo as \'username/repo\' (the owner and repository name), or paste the full URL to a repo index. Both the legacy index.min.json / repo.json and the newer index.pb store format are supported.</string>
     <string name="action_edit_repos">Edit repos</string>
     <plurals name="num_repos">
         <item quantity="one">%d additional repo</item>
@@ -839,7 +845,7 @@ z
     </plurals>
     <string name="error_repo_exists">This repo already exists!</string>
     <string name="snack_repo_deleted">Repo deleted</string>
-    <string name="invalid_repo_name">Invalid category name</string>
+    <string name="invalid_repo_name">Invalid repo. Use \'username/repo\' or a full URL to a repo index.</string>
     <string name="repo_source">Repo source</string>
 
     <!-- EH Settings Login Activity -->

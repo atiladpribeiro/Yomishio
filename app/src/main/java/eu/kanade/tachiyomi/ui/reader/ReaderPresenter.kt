@@ -659,31 +659,32 @@ class ReaderPresenter(
                 Completable.concat(
                     trackList.map { track ->
                         val service = trackManager.getService(track.sync_id)
-                        val shouldAdvanceChapter = chapterRead > track.last_chapter_read
-                        val shouldStartReading = service != null &&
-                            track.status == service.getPlanToReadStatus()
-                        if (service != null && service.isLogged && (shouldAdvanceChapter || shouldStartReading)) {
-                            if (shouldAdvanceChapter) {
-                                track.last_chapter_read = chapterRead
-                            }
-                            if (shouldStartReading) {
-                                track.status = service.getReadingStatus()
-                            }
-
+                        if (service != null && service.isLogged && service.applyChapterRead(track, chapterRead)) {
                             // We want these to execute even if the presenter is destroyed and leaks
                             // for a while. The view can still be garbage collected.
                             if (context.isOnline()) {
                                 Timber.d("Tracking ONLINE")
                                 Observable.defer { service.update(track) }
-                                    .map { db.insertTrack(track).executeAsBlocking() }
+                                    .map {
+                                        db.insertTrack(track).executeAsBlocking()
+                                        track
+                                    }
+                                    .onErrorResumeNext { error: Throwable ->
+                                        Timber.w(error, "Tracking update failed; queuing it for retry")
+                                        db.insertTrack(track).executeAsBlocking()
+                                        delayedTrackingStore.addItem(track)
+                                            .doOnNext { DelayedTrackingUpdateJob.setupTask(context) }
+                                    }
                                     .toCompletable()
-                                    .onErrorComplete()
                             } else {
                                 Timber.d("Tracking OFFLINE")
-                                Observable.defer { delayedTrackingStore.addItem(track) }
+                                Observable.fromCallable {
+                                    db.insertTrack(track).executeAsBlocking()
+                                    track
+                                }
+                                    .flatMap { delayedTrackingStore.addItem(it) }
                                     .map { DelayedTrackingUpdateJob.setupTask(context) }
                                     .toCompletable()
-                                    .onErrorComplete()
                             }
                         } else {
                             Completable.complete()

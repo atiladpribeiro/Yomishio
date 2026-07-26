@@ -22,8 +22,13 @@ import exh.EXH_SOURCE_ID
 import exh.MERGED_SOURCE_ID
 import exh.NHENTAI_SOURCE_ID
 import exh.source.BlacklistedSources
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import rx.Observable
+import timber.log.Timber
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 
@@ -41,6 +46,11 @@ class ExtensionManager(
     private val context: Context,
     private val preferences: PreferencesHelper = Injekt.get()
 ) {
+    private val initialization = CompletableDeferred<Unit>()
+
+    val isInitialized: Boolean
+        get() = initialization.isCompleted
+
     /**
      * API where all the available extensions can be found.
      */
@@ -123,9 +133,24 @@ class ExtensionManager(
      */
     fun init(sourceManager: SourceManager) {
         this.sourceManager = sourceManager
-        initExtensions()
         ExtensionInstallReceiver(InstallationListener()).register(context)
+
+        // PackageManager inspection and extension class loading can take several seconds on
+        // low-power/e-ink devices. Keeping it on the application thread blocks the first frame and
+        // triggers an ANR-looking startup. Sources remain unavailable only during this short load;
+        // components that require them explicitly await initialization.
+        GlobalScope.launch(Dispatchers.IO) {
+            try {
+                initExtensions()
+            } catch (error: Exception) {
+                Timber.e(error, "Failed to initialize extensions")
+            } finally {
+                initialization.complete(Unit)
+            }
+        }
     }
+
+    suspend fun awaitInitialization() = initialization.await()
 
     /**
      * Loads and registers the installed extensions.

@@ -113,6 +113,19 @@ class SettingsReaderController : SettingsController() {
                         defaultValue = false
                     }
                 }
+                intListPreference {
+                    key = Keys.readerColorInversionCompensation
+                    titleRes = R.string.pref_reader_color_inversion_compensation
+                    entriesRes =
+                        arrayOf(
+                            R.string.reader_color_inversion_off,
+                            R.string.reader_color_inversion_auto,
+                            R.string.reader_color_inversion_always
+                        )
+                    entryValues = arrayOf("0", "1", "2")
+                    defaultValue = "1"
+                    summary = "%s"
+                }
             }
 
             preferenceCategory {

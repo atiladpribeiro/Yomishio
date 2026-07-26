@@ -15,6 +15,11 @@ object LegacyDataImporter {
     private const val IMPORT_MARKER = "legacy_data_imported"
 
     fun importIfPresent(context: Context) {
+        val defaultPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+        // Avoid touching emulated storage on every cold start after a successful import.
+        // FUSE metadata calls are noticeably slow on e-ink devices such as the Bigme B7.
+        if (defaultPreferences.getBoolean(IMPORT_MARKER, false)) return
+
         val migrationDir = File(
             Environment.getExternalStorageDirectory(),
             "Yomishio/.migration/legacy"
@@ -25,8 +30,7 @@ object LegacyDataImporter {
             importDatabase(context, File(migrationDir, DATABASE_NAME))
             importPreferences(context, File(migrationDir, "shared_prefs"))
 
-            PreferenceManager.getDefaultSharedPreferences(context)
-                .edit()
+            defaultPreferences.edit()
                 .putBoolean(IMPORT_MARKER, true)
                 .commit()
 

@@ -13,7 +13,7 @@ class DelayedTrackingStore(context: Context) {
     private val preferences = context.getSharedPreferences("tracking_queue", Context.MODE_PRIVATE)
 
     fun addItem(track: Track): Observable<Track> {
-        val trackId = track.id.toString()
+        val trackId = track.id?.toString() ?: return Observable.just(track)
         val (_, lastChapterRead) = preferences.getString(trackId, "0:0.0")!!.split(":")
         if (track.last_chapter_read > lastChapterRead.toFloat()) {
             val value = "${track.manga_id}:${track.last_chapter_read}"
@@ -28,6 +28,12 @@ class DelayedTrackingStore(context: Context) {
     fun clear() {
         preferences.edit {
             clear()
+        }
+    }
+
+    fun removeItem(trackId: Long) {
+        preferences.edit {
+            remove(trackId.toString())
         }
     }
 

@@ -79,6 +79,8 @@ class Anilist(private val context: Context, id: Int) : TrackService(id) {
 
     override fun getPlanToReadStatus(): Int = PLANNING
 
+    override fun getRereadingStatus(): Int = REPEATING
+
     override fun getScoreList(): List<String> {
         return when (scorePreference.get()) {
             // 10 point

@@ -93,8 +93,9 @@ class DownloadStore(
             }
         }
 
-        // Clear the store, downloads will be added again immediately.
-        clear()
+        // Keep the durable copy until the queue has been rebuilt. Clearing here creates a data
+        // loss window if Android kills the process while a large queue is being restored in the
+        // background. DownloadQueue.addAll() safely overwrites every restored entry afterwards.
         return downloads
     }
 
