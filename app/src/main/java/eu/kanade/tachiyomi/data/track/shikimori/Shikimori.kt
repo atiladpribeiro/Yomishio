@@ -108,6 +108,8 @@ class Shikimori(private val context: Context, id: Int) : TrackService(id) {
 
     override fun getPlanToReadStatus(): Int = PLANNING
 
+    override fun getRereadingStatus(): Int = REPEATING
+
     override fun login(
         username: String,
         password: String

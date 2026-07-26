@@ -3,6 +3,7 @@ package eu.kanade.tachiyomi.ui.reader.viewer.pager
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.PointF
 import android.graphics.drawable.Drawable
 import android.view.GestureDetector
@@ -59,6 +60,16 @@ class PagerPageHolder(
     val viewer: PagerViewer,
     val page: ReaderPage
 ) : FrameLayout(viewer.activity), ViewPagerAdapter.PositionableView {
+    init {
+        viewer.activity.colorInversionCompensation.registerPageView(this)
+    }
+
+    override fun dispatchDraw(canvas: Canvas) {
+        val checkpoint = viewer.activity.colorInversionCompensation.beginPageDraw(canvas)
+        super.dispatchDraw(canvas)
+        viewer.activity.colorInversionCompensation.endPageDraw(canvas, checkpoint)
+    }
+
     /**
      * Item that identifies this view. Needed by the adapter to not recreate views.
      */

@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.ui.reader.viewer.webtoon
 
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.DiffUtil
 import eu.kanade.tachiyomi.ui.reader.model.ChapterTransition
@@ -107,7 +106,7 @@ class WebtoonAdapter(
     ): androidx.recyclerview.widget.RecyclerView.ViewHolder {
         return when (viewType) {
             PAGE_VIEW -> {
-                val view = FrameLayout(parent.context)
+                val view = WebtoonPageFrame(viewer)
                 WebtoonPageHolder(view, viewer)
             }
             TRANSITION_VIEW -> {

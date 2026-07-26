@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.ui.reader
 
 import android.content.SharedPreferences
 import android.database.ContentObserver
+import android.graphics.Canvas
 import android.graphics.ColorMatrix
 import android.graphics.ColorMatrixColorFilter
 import android.graphics.Paint
@@ -41,6 +42,17 @@ class ReaderColorInversionCompensation(
     fun registerPageView(view: View) {
         pageViews += view
         applyTo(view, compensationEnabled)
+    }
+
+    /** Starts a canvas layer used on Bigme where view-level RenderEffect is silently ignored. */
+    fun beginPageDraw(canvas: Canvas): Int =
+        if (isBigmeDevice && compensationEnabled) canvas.saveLayer(null, INVERSION_PAINT) else -1
+
+    fun endPageDraw(
+        canvas: Canvas,
+        checkpoint: Int
+    ) {
+        if (checkpoint >= 0) canvas.restoreToCount(checkpoint)
     }
 
     fun close() {
@@ -83,13 +95,19 @@ class ReaderColorInversionCompensation(
         view: View,
         enabled: Boolean
     ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            view.setRenderEffect(if (enabled) inversionRenderEffect() else null)
-        } else {
+        // Bigme's Android 14 renderer accepts RenderEffect but silently ignores it on the reader's
+        // tiled image views. Its page holders apply the filter directly while drawing instead.
+        if (isBigmeDevice) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) view.setRenderEffect(null)
+            view.setLayerType(View.LAYER_TYPE_NONE, null)
+        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             view.setLayerType(
                 if (enabled) View.LAYER_TYPE_HARDWARE else View.LAYER_TYPE_NONE,
                 if (enabled) INVERSION_PAINT else null
             )
+        } else {
+            view.setLayerType(View.LAYER_TYPE_NONE, null)
+            view.setRenderEffect(if (enabled) inversionRenderEffect() else null)
         }
         view.invalidate()
     }
@@ -101,6 +119,9 @@ class ReaderColorInversionCompensation(
     companion object {
         private const val INVERSION_SETTING = "accessibility_display_inversion_enabled"
         private val INVERSION_SETTING_URI = Settings.Secure.getUriFor(INVERSION_SETTING)
+        private val isBigmeDevice =
+            Build.MANUFACTURER.equals("Bigme", ignoreCase = true) ||
+                Build.BRAND.equals("Bigme", ignoreCase = true)
 
         private val INVERSION_FILTER =
             ColorMatrixColorFilter(
