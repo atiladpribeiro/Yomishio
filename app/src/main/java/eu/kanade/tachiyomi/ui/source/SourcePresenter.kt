@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.ui.source
 
 import android.os.Bundle
 import eu.kanade.tachiyomi.data.preference.PreferencesHelper
+import eu.kanade.tachiyomi.extension.ExtensionManager
 import eu.kanade.tachiyomi.source.CatalogueSource
 import eu.kanade.tachiyomi.source.LocalSource
 import eu.kanade.tachiyomi.source.SourceManager
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import rx.Observable
 import rx.Subscription
+import rx.android.schedulers.AndroidSchedulers
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import java.util.TreeMap
@@ -29,6 +31,7 @@ import java.util.TreeMap
 class SourcePresenter(
     val sourceManager: SourceManager = Injekt.get(),
     private val preferences: PreferencesHelper = Injekt.get(),
+    private val extensionManager: ExtensionManager = Injekt.get(),
     private val controllerMode: SourceController.Mode
 ) : BasePresenter<SourceController>() {
     private val scope = CoroutineScope(Job() + Dispatchers.Main)
@@ -45,6 +48,14 @@ class SourcePresenter(
 
         // Load enabled and last used sources
         updateSources()
+
+        // Extension discovery is intentionally done off the main thread on slower devices.
+        // Refresh this screen when that work finishes so an early visit does not keep a stale,
+        // bundled-only source list until the process is restarted.
+        extensionManager.getInstalledExtensionsObservable()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe { refreshSources() }
+            .apply { add(this) }
     }
 
     /**
@@ -114,9 +125,13 @@ class SourcePresenter(
     }
 
     fun updateSources() {
+        refreshSources()
+        loadLastUsedSource()
+    }
+
+    private fun refreshSources() {
         sources = getEnabledSources()
         loadSources()
-        loadLastUsedSource()
     }
 
     /**

@@ -158,14 +158,19 @@ class ExtensionManager(
     private fun initExtensions() {
         val extensions = ExtensionLoader.loadExtensions(context)
 
-        installedExtensions =
+        val loadedExtensions =
             extensions
                 .filterIsInstance<LoadResult.Success>()
                 .map { it.extension }
-        installedExtensions
+
+        // Register every source before notifying observers that extension loading finished.
+        // The Sources screen uses this emission to rebuild its list; emitting first could leave
+        // it permanently showing only the bundled sources when startup loading runs in background.
+        loadedExtensions
             .flatMap { it.sources }
             // overwrite is needed until the bundled sources are removed
             .forEach { sourceManager.registerSource(it, true) }
+        installedExtensions = loadedExtensions
 
         untrustedExtensions =
             extensions
