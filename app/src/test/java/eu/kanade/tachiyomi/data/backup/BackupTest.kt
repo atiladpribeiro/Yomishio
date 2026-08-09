@@ -3,9 +3,6 @@ package eu.kanade.tachiyomi.data.backup
 import android.app.Application
 import android.content.Context
 import android.os.Build
-import com.github.salomonbrys.kotson.fromJson
-import com.google.gson.JsonArray
-import com.google.gson.JsonObject
 import eu.kanade.tachiyomi.BuildConfig
 import eu.kanade.tachiyomi.CustomRobolectricGradleTestRunner
 import eu.kanade.tachiyomi.data.backup.legacy.LegacyBackupManager
@@ -21,6 +18,13 @@ import eu.kanade.tachiyomi.data.database.models.TrackImpl
 import eu.kanade.tachiyomi.source.SourceManager
 import eu.kanade.tachiyomi.source.online.HttpSource
 import exh.eh.EHentaiThrottleManager
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
@@ -45,17 +49,11 @@ import uy.kohesive.injekt.api.addSingleton
 @Config(constants = BuildConfig::class, sdk = [Build.VERSION_CODES.LOLLIPOP])
 @RunWith(CustomRobolectricGradleTestRunner::class)
 class BackupTest {
-    // Create root object
-    var root = JsonObject()
-
-    // Create information object
-    var information = JsonObject()
-
     // Create manga array
-    var mangaEntries = JsonArray()
+    var mangaEntries = mutableListOf<JsonElement>()
 
     // Create category array
-    var categoryEntries = JsonArray()
+    var categoryEntries = mutableListOf<JsonElement>()
 
     lateinit var app: Application
     lateinit var context: Context
@@ -83,9 +81,6 @@ class BackupTest {
 
         source = mock(HttpSource::class.java)
         `when`(legacyBackupManager.sourceManager.get(anyLong())).thenReturn(source)
-
-        root.add(Backup.MANGAS, mangaEntries)
-        root.add(Backup.CATEGORIES, categoryEntries)
     }
 
     /**
@@ -100,7 +95,7 @@ class BackupTest {
         legacyBackupManager.backupCategories(categoryEntries)
 
         // Restore Json
-        legacyBackupManager.restoreCategories(categoryEntries)
+        legacyBackupManager.restoreCategories(JsonArray(categoryEntries))
 
         // Check if empty
         val dbCats = db.getCategories().executeAsBlocking()
@@ -119,7 +114,7 @@ class BackupTest {
         val category = addSingleCategory("category")
 
         // Restore Json
-        legacyBackupManager.restoreCategories(categoryEntries)
+        legacyBackupManager.restoreCategories(JsonArray(categoryEntries))
 
         // Check if successful
         val dbCats = legacyBackupManager.databaseHelper.getCategories().executeAsBlocking()
@@ -146,7 +141,7 @@ class BackupTest {
         db.insertCategory(category).executeAsBlocking()
 
         // Restore Json
-        legacyBackupManager.restoreCategories(categoryEntries)
+        legacyBackupManager.restoreCategories(JsonArray(categoryEntries))
 
         // Check if successful
         val dbCats = legacyBackupManager.databaseHelper.getCategories().executeAsBlocking()
@@ -203,10 +198,9 @@ class BackupTest {
         assertThat(favoriteManga).hasSize(0)
 
         // Restore Json
-        // Create JSON from manga to test parser
-        val json = legacyBackupManager.parser.toJsonTree(manga)
-        // Restore JSON from manga to test parser
-        val jsonManga = legacyBackupManager.parser.fromJson<MangaImpl>(json)
+        // Round-trip the manga through the legacy backup representation.
+        val json = legacyBackupManager.backupMangaObject(manga, 0).jsonObject[Backup.MANGA]!!
+        val jsonManga = legacyBackupManager.jsonToManga(json)
 
         // Restore manga with fetch observable
         val networkManga = getSingleManga("One Piece")
@@ -246,9 +240,18 @@ class BackupTest {
             chapters.add(chapter)
         }
 
-        // Check parser
-        val chaptersJson = legacyBackupManager.parser.toJsonTree(chapters)
-        val restoredChapters = legacyBackupManager.parser.fromJson<List<ChapterImpl>>(chaptersJson)
+        // Round-trip the chapters through the legacy backup representation.
+        val restoredChapters =
+            chapters.map {
+                legacyBackupManager.jsonToChapter(
+                    buildJsonObject {
+                        put("u", it.url)
+                        put("r", if (it.read) 1 else 0)
+                        put("b", if (it.bookmark) 1 else 0)
+                        put("l", it.last_page_read)
+                    }
+                )
+            }
 
         // Fetch chapters from upstream
         // Create list
@@ -290,9 +293,15 @@ class BackupTest {
         val historyList = mutableListOf<DHistory>()
         historyList.add(historyJson)
 
-        // Check parser
-        val historyListJson = legacyBackupManager.parser.toJsonTree(historyList)
-        val history = legacyBackupManager.parser.fromJson<List<DHistory>>(historyListJson)
+        val history =
+            historyList.map {
+                legacyBackupManager.jsonToHistory(
+                    buildJsonArray {
+                        add(it.url)
+                        add(it.lastRead)
+                    }
+                )
+            }
 
         // Restore categories
         legacyBackupManager.restoreHistoryForManga(history)
@@ -330,11 +339,9 @@ class BackupTest {
         val track2 = getSingleTrack(manga2)
         track2.last_chapter_read = 10
 
-        // Check parser and restore already in database
+        // Round-trip and restore a tracking entry already in the database.
         var trackList = listOf(track)
-        // Check parser
-        var trackListJson = legacyBackupManager.parser.toJsonTree(trackList)
-        var trackListRestore = legacyBackupManager.parser.fromJson<List<TrackImpl>>(trackListJson)
+        var trackListRestore = trackList.map(::roundTripTrack)
         legacyBackupManager.restoreTrackForManga(manga, trackListRestore)
 
         // Assert if restore works.
@@ -355,9 +362,7 @@ class BackupTest {
         // Check parser and restore, track not in database
         trackList = listOf(track2)
 
-        // Check parser
-        trackListJson = legacyBackupManager.parser.toJsonTree(trackList)
-        trackListRestore = legacyBackupManager.parser.fromJson<List<TrackImpl>>(trackListJson)
+        trackListRestore = trackList.map(::roundTripTrack)
         legacyBackupManager.restoreTrackForManga(manga2, trackListRestore)
 
         // Assert if restore works.
@@ -367,10 +372,8 @@ class BackupTest {
     }
 
     fun clearJson() {
-        root = JsonObject()
-        information = JsonObject()
-        mangaEntries = JsonArray()
-        categoryEntries = JsonArray()
+        mangaEntries = mutableListOf()
+        categoryEntries = mutableListOf()
     }
 
     fun initializeJsonTest(version: Int) {
@@ -380,9 +383,26 @@ class BackupTest {
 
     fun addSingleCategory(name: String): Category {
         val category = Category.create(name)
-        val catJson = legacyBackupManager.parser.toJsonTree(category)
-        categoryEntries.add(catJson)
+        categoryEntries.add(
+            buildJsonArray {
+                add(category.name)
+                add(category.order)
+            }
+        )
         return category
+    }
+
+    private fun roundTripTrack(track: TrackImpl): TrackImpl {
+        return legacyBackupManager.jsonToTrack(
+            buildJsonObject {
+                put("t", track.title)
+                put("s", track.sync_id)
+                put("r", track.media_id)
+                put("ml", track.library_id)
+                put("l", track.last_chapter_read)
+                put("u", track.tracking_url)
+            }
+        )
     }
 
     fun clearDatabase() {

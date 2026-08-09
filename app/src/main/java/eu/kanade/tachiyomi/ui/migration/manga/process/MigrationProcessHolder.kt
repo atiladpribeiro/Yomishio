@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.ui.migration.manga.process
 
 import android.view.View
-import android.widget.PopupMenu
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.DatabaseHelper
@@ -20,6 +19,7 @@ import eu.kanade.tachiyomi.util.lang.launchUI
 import eu.kanade.tachiyomi.util.system.getResourceColor
 import eu.kanade.tachiyomi.util.view.gone
 import eu.kanade.tachiyomi.util.view.invisible
+import eu.kanade.tachiyomi.util.view.popupMenu
 import eu.kanade.tachiyomi.util.view.setVectorCompat
 import eu.kanade.tachiyomi.util.view.visible
 import exh.MERGED_SOURCE_ID
@@ -192,28 +192,22 @@ class MigrationProcessHolder(
     private fun showPopupMenu(view: View) {
         val item = adapter.getItem(bindingAdapterPosition) ?: return
 
-        // Create a PopupMenu, giving it the clicked view for an anchor
-        val popup = PopupMenu(view.context, view)
-
-        // Inflate our menu resource into the PopupMenu's Menu
-        popup.menuInflater.inflate(R.menu.migration_single, popup.menu)
-
-        val mangas = item.manga
-
-        popup.menu.findItem(R.id.action_search_manually).isVisible = true
-        // Hide download and show delete if the chapter is downloaded
-        if (mangas.searchResult.content != null) {
-            popup.menu.findItem(R.id.action_migrate_now).isVisible = true
-            popup.menu.findItem(R.id.action_copy_now).isVisible = true
-        }
-
-        // Set a listener so we are notified if a menu item is clicked
-        popup.setOnMenuItemClickListener { menuItem ->
-            adapter.menuItemListener.onMenuItemClick(bindingAdapterPosition, menuItem)
-            true
-        }
-
-        // Finally show the PopupMenu
-        popup.show()
+        // Use the AppCompat popup helper so the menu background and text both inherit the
+        // active app theme. The platform PopupMenu used a light surface with light text on
+        // some devices (notably Bigme) while the app was in dark mode.
+        view.popupMenu(
+            R.menu.migration_single,
+            {
+                findItem(R.id.action_search_manually).isVisible = true
+                if (item.manga.searchResult.content != null) {
+                    findItem(R.id.action_migrate_now).isVisible = true
+                    findItem(R.id.action_copy_now).isVisible = true
+                }
+            },
+            {
+                adapter.menuItemListener.onMenuItemClick(bindingAdapterPosition, this)
+                true
+            }
+        )
     }
 }
