@@ -41,8 +41,8 @@ android {
         minSdkVersion 24
         targetSdkVersion 29
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        versionCode 8901
-        versionName "1.2.0"
+        versionCode 9001
+        versionName "1.3.0"
 
         buildConfigField "String", "COMMIT_COUNT", "\"${getCommitCount()}\""
         buildConfigField "String", "COMMIT_SHA", "\"${getGitSha()}\""
@@ -97,7 +97,11 @@ android {
             shrinkResources true
             zipAlignEnabled true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.yomishioRelease
+            // Keep local/CI builds unsigned when the private Yomishio keystore is not
+            // available. GitHub Actions signs that output in its dedicated signing step.
+            if (rootProject.file('work/signing/keystore.properties').exists()) {
+                signingConfig signingConfigs.yomishioRelease
+            }
         }
     }
 
@@ -197,6 +201,7 @@ dependencies {
     implementation 'androidx.preference:preference-ktx:1.1.1'
     implementation 'androidx.annotation:annotation:1.1.0'
     implementation 'androidx.browser:browser:1.3.0'
+    implementation 'androidx.webkit:webkit:1.12.1'
     implementation 'androidx.multidex:multidex:2.0.1'
 
     final lifecycle_version = '2.2.0'
@@ -238,6 +243,10 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlin_serialization_version"
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json-okio:$kotlin_serialization_version"
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-protobuf:$kotlin_serialization_version"
+    // Runtime compatibility for older extensions compiled against Gson/Kotson.
+    implementation 'com.google.code.gson:gson:2.8.6'
+    implementation 'com.github.salomonbrys.kotson:kotson:2.5.0'
+
     // JavaScript engine
     implementation 'com.squareup.duktape:duktape-android:1.4.0'
     implementation 'com.github.zhanghai.quickjs-java:quickjs-android:547f5b1597'
