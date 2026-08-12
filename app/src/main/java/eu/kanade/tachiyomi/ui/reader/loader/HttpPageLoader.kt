@@ -24,6 +24,7 @@ import timber.log.Timber
 import uy.kohesive.injekt.Injekt
 import uy.kohesive.injekt.api.get
 import uy.kohesive.injekt.injectLazy
+import java.util.concurrent.Executors
 import java.util.concurrent.PriorityBlockingQueue
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.min
@@ -52,20 +53,38 @@ class HttpPageLoader(
 
     private val preloadSize = prefs.eh_preload_size().get()
 
+    /**
+     * One dedicated thread per worker.
+     *
+     * The worker loop parks its thread in [PriorityBlockingQueue.take] for as long as the queue is
+     * empty, so it must never run on a shared pool. On `Schedulers.io()` the parked thread is
+     * released back into the cache — and handed out to unrelated subscribers, whose work then never
+     * runs — as soon as `repeat()` swaps subscriptions or this loader is recycled. Owning the
+     * executors also means [recycle] can actually interrupt the parked threads.
+     */
+    private val workerExecutors =
+        List(prefs.eh_readerThreads().get()) { index ->
+            Executors.newSingleThreadExecutor { runnable ->
+                Thread(runnable, "HttpPageLoader#$index").apply { isDaemon = true }
+            }
+        }
+
     init {
         // EXH -->
-        repeat(prefs.eh_readerThreads().get()) {
+        workerExecutors.forEach { executor ->
             // EXH <--
+            val worker = Schedulers.from(executor)
             subscriptions +=
                 Observable.defer { Observable.just(queue.take().page) }
                     .filter { it.status == Page.QUEUE }
-                    .concatMap {
-                        source.fetchImageFromCacheThenNet(it).doOnNext {
-                            XLog.d("Downloaded page: ${it.number}!")
-                        }
-                    }
+                    .concatMap(::loadPageSafely)
+                    // Hop back onto this worker's own thread before repeating. Without this the
+                    // loop resubscribes on whichever thread signalled completion (an OkHttp
+                    // dispatcher thread) and then blocks it indefinitely in `queue.take()`,
+                    // permanently consuming one of OkHttp's per-host request slots.
+                    .observeOn(worker)
                     .repeat()
-                    .subscribeOn(Schedulers.io())
+                    .subscribeOn(worker)
                     .subscribe(
                         {
                         },
@@ -87,6 +106,9 @@ class HttpPageLoader(
         super.recycle()
         subscriptions.unsubscribe()
         queue.clear()
+        // Unsubscribing does not wake a worker parked in `queue.take()`, so interrupt the threads
+        // explicitly. Otherwise every recycled loader leaks its workers for the life of the process.
+        workerExecutors.forEach { it.shutdownNow() }
 
         // Cache current page list progress for online chapters to allow a faster reopen
         val pages = chapter.pages
@@ -246,10 +268,28 @@ class HttpPageLoader(
         }
     }
 
-    @Suppress("DEPRECATION")
+    /**
+     * Loads one queued page without allowing a source/cache exception to terminate the worker.
+     * The worker subscriptions live for the whole chapter, so an uncaught error here would
+     * permanently reduce the configured download concurrency and can eventually leave the queue
+     * with no consumers at all.
+     */
+    private fun loadPageSafely(page: ReaderPage): Observable<ReaderPage> {
+        return Observable.defer { source.fetchImageFromCacheThenNet(page) }
+            .doOnNext { XLog.d("Downloaded page: ${it.number}!") }
+            .doOnError { error ->
+                page.status = Page.ERROR
+                Timber.e(error, "Reader page worker failed on page ${page.number}")
+            }
+            .onErrorResumeNext(Observable.empty())
+    }
+
     private fun HttpSource.fetchPageImageUrl(page: ReaderPage): Observable<ReaderPage> {
         page.status = Page.LOAD_PAGE
-        return fetchImageUrl(page)
+        // Use the suspend API so sources that only override `getImageUrl` (the current
+        // extensions-lib surface) resolve correctly instead of falling through to the
+        // deprecated no-op default.
+        return runAsObservable({ getImageUrl(page) })
             .doOnError { page.status = Page.ERROR }
             .onErrorReturn {
                 // [EXH]
@@ -333,7 +373,7 @@ class HttpPageLoader(
      */
     private fun HttpSource.cacheImage(page: ReaderPage): Observable<ReaderPage> {
         page.status = Page.DOWNLOAD_IMAGE
-        return fetchImage(page)
+        return runAsObservable({ getImage(page) })
             .doOnNext { chapterCache.putImageToCache(page.imageUrl!!, it) }
             .map { page }
     }
@@ -341,9 +381,11 @@ class HttpPageLoader(
     // EXH -->
     fun boostPage(page: ReaderPage) {
         if (page.status == Page.QUEUE) {
+            // Avoid racing the forced request with a stale queued copy of the same page.
+            queue.filter { it.page === page }.forEach(queue::remove)
             subscriptions +=
                 Observable.just(page)
-                    .concatMap { source.fetchImageFromCacheThenNet(it) }
+                    .concatMap(::loadPageSafely)
                     .subscribeOn(Schedulers.io())
                     .subscribe(
                         {

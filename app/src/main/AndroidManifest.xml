@@ -17,7 +17,6 @@
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <!-- Lock vibrate -->
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <!-- To view extension packages in API 30+ -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
@@ -141,6 +140,34 @@
 
                 <data
                     android:host="shikimori-auth"
+                    android:scheme="tachiyomi" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.setting.track.MangaBakaLoginActivity"
+            android:label="MangaBaka">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="mangabaka-auth"
+                    android:scheme="mihon" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ui.setting.track.HikkaLoginActivity"
+            android:label="Hikka">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="hikka-auth"
                     android:scheme="tachiyomi" />
             </intent-filter>
         </activity>
