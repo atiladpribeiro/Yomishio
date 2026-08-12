@@ -48,6 +48,12 @@ class Hikka(private val context: Context, id: Int) : TrackService(id) {
 
     override fun getCompletionStatus(): Int = COMPLETED
 
+    override fun getReadingStatus(): Int = READING
+
+    override fun getPlanToReadStatus(): Int = PLAN_TO_READ
+
+    override fun getRereadingStatus(): Int = REREADING
+
     override fun getScoreList(): List<String> = SCORE_LIST
 
     override fun displayScore(track: Track): String {

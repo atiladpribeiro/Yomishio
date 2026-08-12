@@ -2,6 +2,7 @@ package eu.kanade.tachiyomi.ui.manga.track
 
 import android.os.Bundle
 import com.elvishew.xlog.XLog
+import eu.kanade.tachiyomi.R
 import eu.kanade.tachiyomi.data.database.DatabaseHelper
 import eu.kanade.tachiyomi.data.database.models.Manga
 import eu.kanade.tachiyomi.data.database.models.Track
@@ -137,7 +138,13 @@ class TrackPresenter(
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(
                         { },
-                        { error -> context.toast(error.message) }
+                        { error ->
+                            XLog.e("Failed to register ${service.name} tracking", error)
+                            context.toast(
+                                error.message?.takeIf(String::isNotBlank)
+                                    ?: context.getString(R.string.unknown_error)
+                            )
+                        }
                     )
             )
         } else {

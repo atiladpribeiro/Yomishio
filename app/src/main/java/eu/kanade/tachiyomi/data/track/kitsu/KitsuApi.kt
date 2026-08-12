@@ -92,7 +92,7 @@ class KitsuApi(private val client: OkHttpClient, interceptor: KitsuInterceptor) 
 
             rest.addLibManga(buildJsonObject { put("data", data) })
                 .map { json ->
-                    track.media_id = json["data"]!!.jsonObject["id"]!!.jsonPrimitive.long
+                    track.media_id = parseKitsuLibraryEntryId(json)
                     track
                 }
         }
@@ -274,4 +274,13 @@ class KitsuApi(private val client: OkHttpClient, interceptor: KitsuInterceptor) 
                     .build()
             )
     }
+}
+
+internal fun parseKitsuLibraryEntryId(response: JsonObject): Long {
+    return response["data"]
+        ?.jsonObject
+        ?.get("id")
+        ?.jsonPrimitive
+        ?.long
+        ?: throw IllegalStateException("Kitsu did not return the created library entry ID")
 }

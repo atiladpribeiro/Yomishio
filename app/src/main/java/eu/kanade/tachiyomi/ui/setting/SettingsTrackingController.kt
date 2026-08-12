@@ -173,6 +173,8 @@ class SettingsTrackingController :
         updatePreference(trackManager.aniList.id)
         updatePreference(trackManager.shikimori.id)
         updatePreference(trackManager.bangumi.id)
+        updatePreference(trackManager.mangaBaka.id)
+        updatePreference(trackManager.hikka.id)
     }
 
     private fun updatePreference(id: Int) {

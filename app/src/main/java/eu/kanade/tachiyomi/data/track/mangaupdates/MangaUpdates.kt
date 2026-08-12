@@ -43,6 +43,10 @@ class MangaUpdates(private val context: Context, id: Int) : TrackService(id) {
 
     override fun getCompletionStatus(): Int = COMPLETE_LIST
 
+    override fun getReadingStatus(): Int = READING_LIST
+
+    override fun getPlanToReadStatus(): Int = WISH_LIST
+
     override fun getScoreList(): List<String> = SCORE_LIST
 
     override fun indexToScore(index: Int): Float {

@@ -17,7 +17,6 @@
     <uses-permission android:name="android.permission.USE_FINGERPRINT" />
     <!-- Lock vibrate -->
     <uses-permission android:name="android.permission.VIBRATE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
     <!-- To view extension packages in API 30+ -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />

@@ -53,15 +53,6 @@ class SettingsAboutController : SettingsController() {
                 }
             }
             preference {
-                title = "Dev Build"
-                val url = "https://crafty.moe/tachiyomiAZ.apk"
-                summary = url
-                onClick {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    startActivity(intent)
-                }
-            }
-            preference {
                 titleRes = R.string.version
                 summary =
                     if (BuildConfig.DEBUG) {
@@ -82,15 +73,6 @@ class SettingsAboutController : SettingsController() {
                 titleRes = R.string.check_for_updates
                 if (isUpdaterEnabled) {
                     onClick { checkVersion() }
-                }
-            }
-            preference {
-                titleRes = R.string.website
-                val url = "https://crafty.moe/tachiAZ.htm"
-                summary = url
-                onClick {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    startActivity(intent)
                 }
             }
             preference {

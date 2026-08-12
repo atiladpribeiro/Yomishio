@@ -36,6 +36,10 @@ class Suwayomi(private val context: Context, id: Int) : TrackService(id), Enhanc
 
     override fun getCompletionStatus(): Int = COMPLETED
 
+    override fun getReadingStatus(): Int = READING
+
+    override fun getPlanToReadStatus(): Int = UNREAD
+
     override fun getScoreList(): List<String> = emptyList()
 
     override fun displayScore(track: Track): String = ""
